@@ -87,7 +87,7 @@ if min_size != float('inf'):
     for x in range(0, w, min_size):
         cv2.line(grid_overlay, (x, 0), (x, h), (127), 1)  # Gray grid lines
 
-    print(grid_matrix)
+    # print(grid_matrix)
     # # Visualize the grid overlay
     # print(grid_overlay)
 
@@ -96,6 +96,19 @@ def print_matrix(matrix):
     for row in matrix:
         print(' '.join(['█' if cell else ' ' for cell in row]))
 
+print(grid_matrix)
+
+mask = grid_matrix[8][2]*4 + grid_matrix[8][3]*2 + grid_matrix[8][4]*1
+print(grid_matrix[8][2:5],mask)
 
 cv2.waitKey(0)
 cv2.destroyAllWindows()
+
+
+
+
+
+
+
+
+
