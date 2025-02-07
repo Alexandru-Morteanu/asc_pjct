@@ -4,10 +4,12 @@ import matplotlib.pyplot as plt
 import reedsolo
 from matplotlib.widgets import TextBox
 from PIL import Image, ImageDraw
+from matplotlib.widgets import TextBox, RadioButtons
+
 num_ec_codewords = 0
 mat=[]
 
-def big_problem(input_string):
+def big_problem(input_string, ec_num):
     global mat
     qr_capacity = {
         1: {"L": {0b1: 41, 0b10: 25, 0b100: 17, 0b1000: 10}, "M": {0b1: 34, 0b10: 20, 0b100: 14, 0b1000: 8}, 
@@ -58,12 +60,8 @@ def big_problem(input_string):
         ('H', '7'): np.array([0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1])
     }
 
-    ec_num     = "L"
-    mask_num   = "3"
-    tuplul = (ec_num, mask_num)
+    ec_num     = ec_num[0]
 
-    #input_string=input("input")
-    # input_string="Hello, world! 123"
     def check_input(input_string):
         if input_string.isdigit():
             return 0b0001  
@@ -131,7 +129,6 @@ def big_problem(input_string):
     mat[size - 8, 8] = 1
 
     mat_for_mask = mat.copy()
-    print(mat_for_mask)
 
     binary_data=""
 
@@ -306,11 +303,31 @@ def big_problem(input_string):
     ec_codewords = full_codewords[-num_ec_codewords:]
 
     final_binary_data += ''.join(format(byte, '08b') for byte in ec_codewords) + "0000000"
-    print(final_binary_data)
+    #print(final_binary_data)
 
     mat = fill_qr_matrix(mat, size, final_binary_data)
 
-    # calculam masca
+    def mask_bit(matrix, mask_num, mat_for_mask):
+        for row in range(len(matrix)):
+            for col in range(len(matrix)):
+                if mat_for_mask[row, col] == -1:
+                    if mask_num == "0":
+                        matrix[row][col] ^= (row + col) % 2 == 0
+                    elif mask_num == "1":
+                        matrix[row][col] ^= row % 2 == 0
+                    elif mask_num == "2":
+                        matrix[row][col] ^= col % 3 == 0
+                    elif mask_num == "3":
+                        matrix[row][col] ^= (row + col) % 3 == 0
+                    elif mask_num == "4":
+                        matrix[row][col] ^= (np.floor(row / 2) + np.floor(col / 3)) % 2 == 0
+                    elif mask_num == "5":
+                        matrix[row][col] ^= ((row * col) % 2) + ((row * col) % 3) == 0
+                    elif mask_num == "6":
+                        matrix[row][col] ^= (((row * col) % 2) + ((row * col) % 3)) % 2 == 0
+                    elif mask_num == "7":
+                        matrix[row][col] ^= (((row + col) % 2) + ((row * col) % 3)) % 2 == 0
+        return matrix
 
     # def apply_mask(matrix, mask_pattern):
     #     """Applies the given mask pattern to the QR matrix."""
@@ -341,113 +358,6 @@ def big_problem(input_string):
         
     #     return masked_matrix
 
-    # def calculate_penalty(matrix):
-    #     """Calculates the penalty scores for a given QR matrix."""
-    #     size = len(matrix)
-    #     RunP, BoxP, FindP, BalP = 0, 0, 0, 0
-        
-    #     # RunP: Consecutive runs of the same color
-    #     for i in range(size):
-    #         for j in range(size - 4):
-    #             if all(matrix[i, j + k] == matrix[i, j] for k in range(5)):
-    #                 RunP += 3  # Base penalty for 5-module run
-    #                 k = 5
-    #                 while j + k < size and matrix[i, j + k] == matrix[i, j]:
-    #                     RunP += 1
-    #                     k += 1
-        
-    #     for j in range(size):
-    #         for i in range(size - 4):
-    #             if all(matrix[i + k, j] == matrix[i, j] for k in range(5)):
-    #                 RunP += 3
-    #                 k = 5
-    #                 while i + k < size and matrix[i + k, j] == matrix[i, j]:
-    #                     RunP += 1
-    #                     k += 1
-        
-    #     # BoxP: 2x2 blocks
-    #     for i in range(size - 1):
-    #         for j in range(size - 1):
-    #             if (matrix[i, j] == matrix[i, j + 1] == matrix[i + 1, j] == matrix[i + 1, j + 1]):
-    #                 BoxP += 3
-        
-    #     # FindP: Finder-like patterns (1011101)
-    #     finder_pattern = np.array([1, 0, 1, 1, 1, 0, 1])
-    #     for i in range(size):
-    #         for j in range(size - 6):
-    #             if np.array_equal(matrix[i, j:j + 7], finder_pattern) or np.array_equal(matrix[j:j + 7, i], finder_pattern):
-    #                 FindP += 40
-        
-    #     # BalP: Dark/light balance
-    #     dark_modules = np.sum(matrix)
-    #     total_modules = size * size
-    #     dark_ratio = (dark_modules / total_modules) * 100
-        
-    #     if 45 <= dark_ratio <= 55:
-    #         BalP = 0
-    #     elif 40 <= dark_ratio < 60:
-    #         BalP = 10
-    #     elif 35 <= dark_ratio < 65:
-    #         BalP = 20
-    #     elif 30 <= dark_ratio < 70:
-    #         BalP = 30
-    #     else:
-    #         BalP = 40
-        
-    #     TotalP = RunP + BoxP + FindP + BalP
-    #     return RunP, BoxP, FindP, BalP, TotalP
-
-    # def main(qr_matrix):
-    #     """Computes the penalty scores for all 8 masks."""
-    #     results = []
-    #     for mask in range(8):
-    #         masked_matrix = apply_mask(qr_matrix, mask)
-    #         RunP, BoxP, FindP, BalP, TotalP = calculate_penalty(masked_matrix)
-    #         results.append((mask, RunP, BoxP, FindP, BalP, TotalP))
-        
-    #     # Sort by lowest total penalty
-    #     results.sort(key=lambda x: x[-1])
-        
-    #     print("Mask | RunP | BoxP | FindP | BalP | TotalP")
-    #     print("----------------------------------------")
-    #     for res in results:
-    #         print(f"  {res[0]}  |  {res[1]}  |  {res[2]}  |  {res[3]}  |  {res[4]}  |  {res[5]}")
-        
-    #     best_mask = results[0][0]
-    #     print(f"\nBest mask: {best_mask} with penalty {results[0][-1]}")
-
-    # # Example Usage
-    # main(mat)
-
-    def apply_mask(matrix, mask_pattern):
-        """Applies the given mask pattern to the QR matrix."""
-        size = len(matrix)
-        masked_matrix = np.copy(matrix)
-        
-        for i in range(size):
-            for j in range(size):
-                if mask_pattern == 0:
-                    condition = (i + j) % 2 == 0
-                elif mask_pattern == 1:
-                    condition = i % 2 == 0
-                elif mask_pattern == 2:
-                    condition = j % 3 == 0
-                elif mask_pattern == 3:
-                    condition = (i + j) % 3 == 0
-                elif mask_pattern == 4:
-                    condition = (i // 2 + j // 3) % 2 == 0
-                elif mask_pattern == 5:
-                    condition = ((i * j) % 2) + ((i * j) % 3) == 0
-                elif mask_pattern == 6:
-                    condition = (((i * j) % 2) + ((i * j) % 3)) % 2 == 0
-                elif mask_pattern == 7:
-                    condition = (((i + j) % 2) + ((i * j) % 3)) % 2 == 0
-                
-                if condition:
-                    masked_matrix[i, j] ^= 1  # Toggle bit
-        
-        return masked_matrix
-
 
     def calculate_penalty(matrix):
         size = len(matrix)
@@ -462,19 +372,18 @@ def big_problem(input_string):
                     run_length += 1
                 else:
                     if run_length >= 5:
-                        for i in range(i-run_length, i):
-                            line[i]=-1
                         run_score += run_length - 2  # 3 points for 5, 4 points for 6, etc.
                     run_length = 1
             if run_length >= 5:
                 run_score += run_length - 2
             return run_score
-        for row in matrix:
-            runP = calculate_run_penalty(row)
-        for col in matrix.T:
-            # runP += calculate_run_penalty(col)
-            score += runP
-        print(matrix)
+        runP = 0
+        for i in range(len(matrix)):
+            runP += calculate_run_penalty(matrix[i])
+        for i in range(len(matrix)):
+            runP += calculate_run_penalty(matrix.T[i])
+        score += runP
+        #print(matrice_help)
         # BoxP: Count 2x2 blocks of the same color
         boxP = 0
         for i in range(size - 1):
@@ -486,18 +395,22 @@ def big_problem(input_string):
         # FindP: Detect finder patterns (approximated as 1-1-3-1-1 sequences)
         def detect_finder_pattern(line):
             count = 0
-            pattern1 = [1,0,1,1,1,0,1,0]
-            pattern2 = [0,1,0,1,1,1,0,1]
-            for i in range(len(line) - 8):
-                if list(line[i:i+9]) == pattern1 or list(line[i:i+9]) == pattern2:
+            pattern1 = [0,0,0,0,1,0,1,1,1,0,1,0]
+            pattern2 = [0,1,0,1,1,1,0,1,0,0,0,0]
+            for i in range(len(line) - 11):
+                if list(line[i:i+12]) == pattern1:
                     count += 1
+                if list(line[i:i+12]) == pattern2:
+                    count +=1
             return count
+        padded_matrix = np.pad(matrix, pad_width=5, mode='constant', constant_values=0)
         findP = 0
-        for row in matrix:
+        for row in padded_matrix:
             findP += 40 * detect_finder_pattern(row)
-        for col in matrix.T:
+        for col in padded_matrix.T:
             findP += 40 * detect_finder_pattern(col)
         score += findP
+        print("FindP: ",findP)
 
         # BalP: Compute balance penalty
         dark_modules = np.sum(matrix)
@@ -506,23 +419,33 @@ def big_problem(input_string):
         biggest_ratio = max(dark_ratio,100-dark_ratio)
         print("Biggest Ratio:",biggest_ratio)
         
-        penalty_steps = [5, 10, 15, 20, 25, 30, 35, 40]  # Every 5% outside [45%, 55%]
         balP = 0
         if biggest_ratio - 55 > 0:
             difference = biggest_ratio - 55
             balP = math.ceil(difference/5)*10
             score += balP
-
+        print(score)
         return runP, boxP, findP, balP, score
 
-    def main(qr_matrix):
+
+    def calculate_final_mask(matrix, mat_for_mask, ec_num):
         """Computes the penalty scores for all 8 masks."""
         results = []
         for mask in range(8):
-            masked_matrix = apply_mask(qr_matrix, mask)
+            matrice_help = matrix.copy()
+            tuplul = (ec_num, str(mask))
+            print(tuplul)
+            for i in range(8):
+                matrice_help[8, i if i < 6 else i + 1] = type_information_bits[tuplul][i]
+                matrice_help[8, size - 8 + i] = type_information_bits[tuplul][i+7]
+            for i in range(8):
+                matrice_help[size - 1 - i if i < 7 else i + 1, 8] = type_information_bits[tuplul][i]
+                matrice_help[0 + i if i != 6 else i + 1 , 8] = type_information_bits[tuplul][14-i]
+            matrice_help[size - 8, 8] = 1
+
+            masked_matrix = mask_bit(matrice_help, str(mask), mat_for_mask)
             score = calculate_penalty(masked_matrix)
             results.append((mask, score[0], score[1], score[2], score[3], score[4]))
-        
         # Sort by lowest total penalty
         results.sort(key=lambda x: x[-1])
         
@@ -533,12 +456,18 @@ def big_problem(input_string):
         
         best_mask = results[0][0]
         print(f"\nBest mask: {best_mask} with penalty {results[0][-1]}")
+        return best_mask
 
     # Example Usage
-    main(mat)
+    # mtrice = mat.copy()
+    
+    #matrice_help = calculate_final_mask(mat, mat_for_mask)
 
 
-    tuplul = (ec_num, mask_num)
+    maska_buna = calculate_final_mask(mat, mat_for_mask, ec_num)
+    mat = mask_bit(mat, str(maska_buna), mat_for_mask)
+
+    tuplul = (ec_num, str(maska_buna))
     for i in range(8):
         mat[8, i if i < 6 else i + 1] = type_information_bits[tuplul][i]
         mat[8, size - 8 + i] = type_information_bits[tuplul][i+7]
@@ -546,49 +475,41 @@ def big_problem(input_string):
         mat[size - 1 - i if i < 7 else i + 1, 8] = type_information_bits[tuplul][i]
         mat[0 + i if i != 6 else i + 1 , 8] = type_information_bits[tuplul][14-i]
     mat[size - 8, 8] = 1
-    # xoram
-
-    def mask_bit(row, col, mat, mask_num):
-        if mask_num == "0":
-            mat[row][col] ^= (row + col) % 2 == 0
-        elif mask_num == "1":
-            mat[row][col] ^= row % 2 == 0
-        elif mask_num == "2":
-            mat[row][col] ^= col % 3 == 0
-        elif mask_num == "3":
-            mat[row][col] ^= (row + col) % 3 == 0
-        elif mask_num == "4":
-            mat[row][col] ^= (np.floor(row / 2) + np.floor(col / 3)) % 2 == 0
-        elif mask_num == "5":
-            mat[row][col] ^= ((row * col) % 2) + ((row * col) % 3) == 0
-        elif mask_num == "6":
-            mat[row][col] ^= (((row * col) % 2) + ((row * col) % 3)) % 2 == 0
-        elif mask_num == "7":
-            mat[row][col] ^= (((row + col) % 2) + ((row * col) % 3)) % 2 == 0
-
-        
-    for row in range(size):
-        for col in range(size):
-            if mat_for_mask[row, col] == -1:
-                mask_bit(row,col, mat, mask_num)
+    
     return mat
-fig, ax = plt.subplots(figsize=(5, 3))
-plt.subplots_adjust(bottom=0.3)  # Space for the text box
+
+fig, ax = plt.subplots(figsize=(6, 6))
+plt.subplots_adjust(bottom=0.4)  # Space for text box and dropdown
 ax.axis('off')  # Hide axes
 
-# Function to update text image
-def update_text(text):
-    ax.clear()  # Clear previous image
-    ax.axis('off')  # Hide axes
+def update_text(text, label="Low"):
+    ax.clear()
+    ax.axis('off')
+    mat = big_problem(text, label)  # Use dropdown value
+    ax.imshow(mat, cmap='gray_r', interpolation='nearest')
     
-    matrix = big_problem(text)  # Generate image matrix
-    ax.imshow(matrix, cmap='gray_r', interpolation='nearest')  # Display image
-    
-    fig.canvas.draw_idle()  # Refresh the figure
+    fig.canvas.draw_idle()  # Refresh figure
 
-# Create a text input box
-axbox = plt.axes([0.2, 0.1, 0.6, 0.075])  # Position [left, bottom, width, height]
+# Function to update the image when dropdown changes
+def update_option(label):
+    print(label)
+    update_text(text_box.text, label)  # Refresh with the current text
+
+# Create text input box
+axbox = plt.axes([0.2, 0.05, 0.6, 0.075])  # Position: left, bottom, width, height
 text_box = TextBox(axbox, "Enter Text: ")
-text_box.on_submit(update_text)  # Call update_text when text is entered
+text_box.on_text_change(update_text)
+# Create dropdown menu (RadioButtons) with better styling
+ax_dropdown = plt.axes([0.2, 0.14, 0.2, 0.2])  # Adjusted height
+dropdown = RadioButtons(ax_dropdown, ["Low", "Medium", "Quartile", "High"], 
+                        activecolor="black")  # Highlight selected option
+
+# Increase font size and marker size
+for circle in dropdown.circles:
+    circle.set_radius(0.03)  # Bigger selection buttons
+for label in dropdown.labels:
+    label.set_fontsize(10)  # Increase text size
+
+dropdown.on_clicked(update_option)
 
 plt.show()
