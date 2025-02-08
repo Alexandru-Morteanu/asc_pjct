@@ -28,13 +28,24 @@ Pentru a rula acest proiect, este necesar să aveți instalat:
    pip install -r requirements.txt
    ```
 
-## Utilizare
-1. Rulați scriptul principal:
+## Utilizare Generator
+1. Rulați scriptul de generare:
    ```sh
-   python main.py
+   python generate.py
    ```
-2. Introduceți textul sau URL-ul dorit
-3. Salvați imaginea generată
+3. Introduceți textul sau URL-ul dorit
+4. Selectati calitatea QR codului
+
+## Utilizare Generator
+1. Rulați scriptul de generare:
+   ```sh
+   cd asc_pjct
+   ```
+2. Rulați scriptul de scanare:
+   ```sh
+   python scan.py
+   ```
+3. Scanati QR codul
 
 ## Contribuții
 Orice contribuție este binevenită! Pentru a contribui:
