@@ -21,7 +21,7 @@ Pentru a rula acest proiect, este necesar să aveți instalat:
    ```
 2. Accesați directorul proiectului:
    ```sh
-   cd proiect-qr
+   cd asc_pjct
    ```
 3. Instalați dependențele necesare:
    ```sh
