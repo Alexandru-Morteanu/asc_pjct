@@ -329,35 +329,6 @@ def big_problem(input_string, ec_num):
                         matrix[row][col] ^= (((row + col) % 2) + ((row * col) % 3)) % 2 == 0
         return matrix
 
-    # def apply_mask(matrix, mask_pattern):
-    #     """Applies the given mask pattern to the QR matrix."""
-    #     size = len(matrix)
-    #     masked_matrix = np.copy(matrix)
-        
-    #     for i in range(size):
-    #         for j in range(size):
-    #             if mask_pattern == 0:
-    #                 condition = (i + j) % 2 == 0
-    #             elif mask_pattern == 1:
-    #                 condition = i % 2 == 0
-    #             elif mask_pattern == 2:
-    #                 condition = j % 3 == 0
-    #             elif mask_pattern == 3:
-    #                 condition = (i + j) % 3 == 0
-    #             elif mask_pattern == 4:
-    #                 condition = (i // 2 + j // 3) % 2 == 0
-    #             elif mask_pattern == 5:
-    #                 condition = ((i * j) % 2) + ((i * j) % 3) == 0
-    #             elif mask_pattern == 6:
-    #                 condition = (((i * j) % 2) + ((i * j) % 3)) % 2 == 0
-    #             elif mask_pattern == 7:
-    #                 condition = (((i + j) % 2) + ((i * j) % 3)) % 2 == 0
-                
-    #             if condition:
-    #                 masked_matrix[i, j] ^= 1  # Toggle bit
-        
-    #     return masked_matrix
-
 
     def calculate_penalty(matrix):
         size = len(matrix)
@@ -434,7 +405,6 @@ def big_problem(input_string, ec_num):
         for mask in range(8):
             matrice_help = matrix.copy()
             tuplul = (ec_num, str(mask))
-            print(tuplul)
             for i in range(8):
                 matrice_help[8, i if i < 6 else i + 1] = type_information_bits[tuplul][i]
                 matrice_help[8, size - 8 + i] = type_information_bits[tuplul][i+7]
@@ -458,12 +428,6 @@ def big_problem(input_string, ec_num):
         print(f"\nBest mask: {best_mask} with penalty {results[0][-1]}")
         return best_mask
 
-    # Example Usage
-    # mtrice = mat.copy()
-    
-    #matrice_help = calculate_final_mask(mat, mat_for_mask)
-
-
     maska_buna = calculate_final_mask(mat, mat_for_mask, ec_num)
     mat = mask_bit(mat, str(maska_buna), mat_for_mask)
 
@@ -479,36 +443,33 @@ def big_problem(input_string, ec_num):
     return mat
 
 fig, ax = plt.subplots(figsize=(6, 6))
-plt.subplots_adjust(bottom=0.4)  # Space for text box and dropdown
-ax.axis('off')  # Hide axes
+plt.subplots_adjust(bottom=0.4)
+ax.axis('off')
 
 def update_text(text, label="Low"):
     ax.clear()
     ax.axis('off')
-    mat = big_problem(text, label)  # Use dropdown value
+    mat = big_problem(text, label)
     ax.imshow(mat, cmap='gray_r', interpolation='nearest')
     
-    fig.canvas.draw_idle()  # Refresh figure
+    fig.canvas.draw_idle()
 
-# Function to update the image when dropdown changes
 def update_option(label):
     print(label)
-    update_text(text_box.text, label)  # Refresh with the current text
+    update_text(text_box.text, label)
 
-# Create text input box
-axbox = plt.axes([0.2, 0.05, 0.6, 0.075])  # Position: left, bottom, width, height
+axbox = plt.axes([0.2, 0.05, 0.6, 0.075])
 text_box = TextBox(axbox, "Enter Text: ")
 text_box.on_text_change(update_text)
-# Create dropdown menu (RadioButtons) with better styling
-ax_dropdown = plt.axes([0.2, 0.14, 0.2, 0.2])  # Adjusted height
+ax_dropdown = plt.axes([0.2, 0.14, 0.2, 0.2])
 dropdown = RadioButtons(ax_dropdown, ["Low", "Medium", "Quartile", "High"], 
-                        activecolor="black")  # Highlight selected option
+                        activecolor="black")
 
-# Increase font size and marker size
+
 for circle in dropdown.circles:
-    circle.set_radius(0.03)  # Bigger selection buttons
+    circle.set_radius(0.03)
 for label in dropdown.labels:
-    label.set_fontsize(10)  # Increase text size
+    label.set_fontsize(10)
 
 dropdown.on_clicked(update_option)
 
