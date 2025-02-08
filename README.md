@@ -1,7 +1,7 @@
-# Generator de Coduri QR
+# Generator / Scanner de Coduri QR
 
 ## Descriere
-Acest proiect este un generator de coduri QR care permite utilizatorilor să introducă un text sau o adresă URL și să genereze un cod QR corespunzător. Utilizatorii pot descărca imaginea codului QR generat pentru utilizare ulterioară.
+Acest proiect este un generator și scanner de coduri QR facut cu scop academic
 
 ## Caracteristici
 - Introducerea unui text sau URL pentru generarea codului QR
