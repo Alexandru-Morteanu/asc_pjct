@@ -2,88 +2,89 @@ import cv2
 import reedsolo
 import numpy as np
 import matplotlib.pyplot as plt
-import reedsolo
 
-image = cv2.imread('qralpha.png')
-gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-_, black_mask = cv2.threshold(gray, 50, 255, cv2.THRESH_BINARY_INV)
-contours, _ = cv2.findContours(black_mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-contour_matrix = np.ones_like(gray, dtype=np.uint8)
-cv2.drawContours(contour_matrix, contours, -1, (0), thickness=cv2.FILLED)
+def detect_and_crop_qr_code(image_path):
+    # Load image
+    img = cv2.imread(image_path)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-rows = np.any(contour_matrix == 0, axis=1)
-cols = np.any(contour_matrix == 0, axis=0)
+    # Apply edge detection
+    edges = cv2.Canny(gray, 100, 200)
 
-y_min, y_max = np.where(rows)[0][[0, -1]]
-x_min, x_max = np.where(cols)[0][[0, -1]]
+    # Find contours
+    contours, _ = cv2.findContours(edges, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    
+    squares = []
 
-if y_max - y_min > 1 and x_max - x_min > 1:
-    y_min += 1
-    y_max -= 1
-    x_min += 1
-    x_max -= 1
+    for cnt in contours:
+        approx = cv2.approxPolyDP(cnt, 0.02 * cv2.arcLength(cnt, True), True)
+        if len(approx) == 4:  # Looking for quadrilaterals
+            area = cv2.contourArea(approx)
+            if area > 500:  # Filter small ones
+                squares.append(approx)
 
-cropped_matrix = contour_matrix[y_min:y_max+1, x_min:x_max+1]
+    if len(squares) >= 3:
+        # Combine the squares into one contour and find the convex hull
+        qr_contour = np.concatenate(squares)
+        hull = cv2.convexHull(qr_contour)
 
-min_size = float('inf')
-for contour in contours:
-    x, y, w, h = cv2.boundingRect(contour)
-    if w == h and w > 1:
-        min_size = min(min_size, w)
+        # Get bounding box of the convex hull
+        x, y, w, h = cv2.boundingRect(hull)
 
-if min_size != float('inf'):
+        # Crop the detected QR code
+        cropped_qr = img[y:y + h, x:x + w]
 
-    h, w = cropped_matrix.shape
+        return cropped_qr
 
-    rows_count = h // min_size
-    cols_count = w // min_size
+# Example usage
+cropped_code = detect_and_crop_qr_code("astae3.png")
 
-    resized_image = cv2.resize(cropped_matrix, (cols_count * min_size, rows_count * min_size))
+def find_largest_black_square(image):
+    # Convert to grayscale
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    
+    # Threshold to create a binary image (black regions will be 255)
+    _, binary = cv2.threshold(gray, 10, 255, cv2.THRESH_BINARY_INV)
+    
+    # Find contours
+    contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    max_square = None
+    max_area = 0
+    
+    for contour in contours:
+        x, y, w, h = cv2.boundingRect(contour)
+        if w == h and w * h > max_area:  # Ensure it's a square
+            max_area = w * h
+            max_square = (x, y, w, h)
+    
+    if max_square:
+        x, y, w, h = max_square
+        #cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 3)  # Red rectangle
+    
+    return image,w//7
 
-    grid_matrix = np.zeros((rows_count, cols_count), dtype=int)
-
-    for row in range(rows_count):
-        for col in range(cols_count):
-            start_x = col * min_size
-            start_y = row * min_size
-            end_x = (col + 1) * min_size
-            end_y = (row + 1) * min_size
-            cell = resized_image[start_y:end_y, start_x:end_x]
-
-            avg_intensity = np.mean(cell)
-            if avg_intensity < 0.5:
-                grid_matrix[row, col] = 1
-            else:
-                grid_matrix[row, col] = 0
-grid_matrix = np.array([
-    [1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1],
-    [1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1],
-    [1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1],
-    [1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1],
-    [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
-    [1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1],
-    [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-    [1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1],
-    [1, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0],
-    [0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0],
-    [1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0],
-    [0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 1],
-    [0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1],
-    [0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0],
-    [1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0, 1],
-    [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1],
-    [1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1],
-    [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1],
-    [1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1],
-    [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1],
-    [1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 0],
-    [1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0],
-    [1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1]
-]
-)
-
+# Process the cropped QR code to find the largest black square
+if cropped_code is not None:
+    processed_image, square_size = find_largest_black_square(cropped_code)
+    h, w = processed_image.shape[:2]
+    new_h = h // square_size
+    new_h -= 21
+    new_h = round(new_h / 4) * 4 + 21
+    
+    # Resize the image properly
+    downscaled = cv2.resize(processed_image, (new_h, new_h), interpolation=cv2.INTER_AREA)
+    
+    # Convert to grayscale if necessary
+    if len(downscaled.shape) == 3:
+        downscaled = cv2.cvtColor(downscaled, cv2.COLOR_BGR2GRAY)
+    
+    # Ensure the image is correctly binarized
+    _, binary_matrix = cv2.threshold(downscaled, 128, 1, cv2.THRESH_BINARY)
+    
+    # Invert the matrix (swap 0s and 1s)
+    grid_matrix = 1 - binary_matrix
+print(grid_matrix)
 mask=[]
 for i in range(0,9):
     if i != 6:
@@ -149,6 +150,7 @@ print(f"Closest match: {ec_num}, {mask_num}, Hamming distance: {distance}")
 
 size = len(grid_matrix)
 version = int((size - 21)/4) + 1
+
 mat_for_mask = np.full((size, size), -1)
 
 def place_qr_finder(matrix, x, y):
@@ -312,6 +314,9 @@ ecc_codewords = binary_to_bytes(ecc_bin)
 
 data_hex = [hex(b) for b in data_codewords]
 ecc_hex = [hex(b) for b in ecc_codewords]
+
+print("DATA HEX",data_hex)
+print("ECC HEX",ecc_hex)
 print("sequence",binary_sequence)
 encoded_message = data_codewords + ecc_codewords
 print(ecc_codewords)
@@ -319,18 +324,46 @@ print("length of ecc",len(ecc_codewords))
 print(encoded_message)
 print("length of messahe",len(encoded_message))
 
-rs = reedsolo.RSCodec(len(ecc_codewords))
 
-try:
-    print("before")
-    repaired_data = rs.decode(encoded_message)[0]
-    print("after")
-    repaired_binary_data = bytes(repaired_data)
-    print("afterr")
-    repaired_binary_data = ''.join(format(byte, '08b') for byte in repaired_data)
-    print("Repaired Binary Data:", repaired_binary_data)
-except reedsolo.ReedSolomonError as e:
-    print("Decoding failed:", e)
+if version <= 2:
+    rs = reedsolo.RSCodec(len(ecc_codewords))
+
+    try:
+        print("before")
+        repaired_data = rs.decode(encoded_message)[0]
+        print("after")
+        repaired_binary_data = bytes(repaired_data)
+        print("afterr")
+        repaired_binary_data = ''.join(format(byte, '08b') for byte in repaired_data)
+        print("Repaired Binary Data:", repaired_binary_data)
+    except reedsolo.ReedSolomonError as e:
+        print("Decoding failed:", e)
+else:
+    rs = reedsolo.RSCodec(len(ecc_codewords)//2)
+    try:
+        print("INCERC")
+        repaired_data1 = rs.decode(encoded_message[::2])[0]
+        print(repaired_data1)
+        repaired_binary_data1 = bytes(repaired_data1)
+        repaired_binary_data1 = ''.join(format(byte, '08b') for byte in repaired_data1)
+    except reedsolo.ReedSolomonError as e:
+        print("Decoding failed 1:",e)
+
+    rs = reedsolo.RSCodec(len(ecc_codewords) - (len(ecc_codewords)//2))
+    try:
+        repaired_data2 = rs.decode(encoded_message[1::2])[0]
+        print("ENCODED MESSAGE",encoded_message[1::2])
+        repaired_binary_data2 = bytes(repaired_data2)
+        repaired_binary_data2 = ''.join(format(byte, '08b') for byte in repaired_data2)
+    except reedsolo.ReedSolomonError as e:
+        print("Decoding failed 2:",e)
+    repaired_binary_data=''
+    print("UNU",repaired_binary_data1)
+    print("DOI",repaired_binary_data2)
+    # for i in range(len(repaired_binary_data1)):
+    #     repaired_binary_data += repaired_binary_data1[i] + repaired_binary_data2[i]
+    repaired_binary_data=repaired_binary_data1+repaired_binary_data2
+    print("UNU+DOI",repaired_binary_data)
 
 mod_num = repaired_binary_data[:4]
 char_count_bites = 1
