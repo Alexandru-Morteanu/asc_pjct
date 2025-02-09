@@ -435,8 +435,8 @@ Pentru a rula acest proiect, este necesar să aveți instalat:
 
 ## Contribuții
 1. Morteanu Alexandru
-2. Denis
-3. Teo
-4. Mario
+2. Bejan-Topse Denis-Marian
+3. Blezniuc Teoodor Mihai
+4. Dragan Mario Alexandru
 
 
