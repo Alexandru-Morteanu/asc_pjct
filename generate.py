@@ -227,16 +227,46 @@ def big_problem(input_string, ec_num):
         }
 
         target_lengths = {
-            1: {"L": 26 - 7, "M": 26 - 10, "Q": 26 - 13, "H": 26 - 17},
-            2: {"L": 44 - 10, "M": 44 - 16, "Q": 44 - 22, "H": 44 - 28},
-            3: {"L": 70 - 15, "M": 70 - 24, "Q": 70 - 34, "H": 70 - 44},
-            4: {"L": 100 - 20, "M": 100 - 32, "Q": 100 - 49, "H": 100 - 64},
-            5: {"L": 108 - 26, "M": 108 - 41, "Q": 108 - 62, "H": 108 - 80},
-            6: {"L": 136 - 36, "M": 136 - 55, "Q": 136 - 82, "H": 136 - 102},
-            7: {"L": 156 - 42, "M": 156 - 63, "Q": 156 - 94, "H": 156 - 120},
-            8: {"L": 194 - 58, "M": 194 - 87, "Q": 194 - 130, "H": 194 - 162},
-            9: {"L": 232 - 72, "M": 232 - 106, "Q": 232 - 151, "H": 232 - 194},
-            10: {"L": 274 - 92, "M": 274 - 137, "Q": 274 - 202, "H": 274 - 251},
+            1: {"L": 19, "M": 16, "Q": 13, "H": 9},
+            2: {"L": 34, "M": 28, "Q": 22, "H": 16},
+            3: {"L": 55, "M": 44, "Q": 34, "H": 26},
+            4: {"L": 80, "M": 64, "Q": 48, "H": 36},
+            5: {"L": 108, "M": 86, "Q": 62, "H": 46},
+            6: {"L": 136, "M": 108, "Q": 76, "H": 60},
+            7: {"L": 156, "M": 124, "Q": 88, "H": 66},
+            8: {"L": 194, "M": 154, "Q": 110, "H": 86},
+            9: {"L": 232, "M": 182, "Q": 132, "H": 100},
+            10: {"L": 274, "M": 216, "Q": 154, "H": 122},
+            11: {"L": 324, "M": 254, "Q": 180, "H": 140},
+            12: {"L": 370, "M": 290, "Q": 206, "H": 158},
+            13: {"L": 428, "M": 334, "Q": 244, "H": 180},
+            14: {"L": 461, "M": 365, "Q": 261, "H": 197},
+            15: {"L": 523, "M": 415, "Q": 295, "H": 223},
+            16: {"L": 589, "M": 453, "Q": 325, "H": 253},
+            17: {"L": 647, "M": 507, "Q": 367, "H": 283},
+            18: {"L": 721, "M": 563, "Q": 397, "H": 313},
+            19: {"L": 795, "M": 627, "Q": 445, "H": 341},
+            20: {"L": 861, "M": 669, "Q": 485, "H": 385},
+            21: {"L": 932, "M": 714, "Q": 512, "H": 406},
+            22: {"L": 1006, "M": 782, "Q": 568, "H": 442},
+            23: {"L": 1094, "M": 860, "Q": 614, "H": 464},
+            24: {"L": 1174, "M": 914, "Q": 664, "H": 514},
+            25: {"L": 1276, "M": 1000, "Q": 718, "H": 538},
+            26: {"L": 1370, "M": 1062, "Q": 754, "H": 596},
+            27: {"L": 1468, "M": 1128, "Q": 808, "H": 628},
+            28: {"L": 1531, "M": 1193, "Q": 871, "H": 661},
+            29: {"L": 1631, "M": 1267, "Q": 911, "H": 701},
+            30: {"L": 1735, "M": 1373, "Q": 985, "H": 745},
+            31: {"L": 1843, "M": 1455, "Q": 1033, "H": 793},
+            32: {"L": 1955, "M": 1541, "Q": 1115, "H": 845},
+            33: {"L": 2071, "M": 1631, "Q": 1171, "H": 901},
+            34: {"L": 2191, "M": 1725, "Q": 1231, "H": 961},
+            35: {"L": 2306, "M": 1812, "Q": 1286, "H": 986},
+            36: {"L": 2434, "M": 1914, "Q": 1354, "H": 1054},
+            37: {"L": 2566, "M": 1992, "Q": 1426, "H": 1096},
+            38: {"L": 2702, "M": 2102, "Q": 1502, "H": 1142},
+            39: {"L": 2812, "M": 2216, "Q": 1582, "H": 1222},
+            40: {"L": 2956, "M": 2334, "Q": 1666, "H": 1276}
         }
 
         if version not in total_codewords:
@@ -297,13 +327,46 @@ def big_problem(input_string, ec_num):
 
 
     data_codewords = [int(final_binary_data[i:i+8], 2) for i in range(0, len(final_binary_data), 8)]
-
     rs = reedsolo.RSCodec(num_ec_codewords)
     full_codewords = rs.encode(data_codewords)
     ec_codewords = full_codewords[-num_ec_codewords:]
+    if version == 3 and (ec_num == "Q" or ec_num == "H"):
+        num_ec_codewords = num_ec_codewords // 2
 
-    final_binary_data += ''.join(format(byte, '08b') for byte in ec_codewords) + "0000000"
-    #print(final_binary_data)
+        mid = len(final_binary_data) // 2
+        first_half = final_binary_data[:mid] 
+        second_half = final_binary_data[mid:] 
+
+        even_codewords = [int(first_half[i:i+8], 2) for i in range(0, len(first_half), 8)]
+        odd_codewords = [int(second_half[i:i+8], 2) for i in range(0, len(second_half), 8)]
+
+        rs = reedsolo.RSCodec(num_ec_codewords)
+
+        full_even_codewords = rs.encode(even_codewords)
+        full_odd_codewords = rs.encode(odd_codewords)
+
+        ec_even_codewords = full_even_codewords[-num_ec_codewords:]
+        ec_odd_codewords = full_odd_codewords[-num_ec_codewords:]
+        ec_even_binary = ' '.join(format(byte, '08b') for byte in ec_even_codewords)
+        ec_odd_binary = ' '.join(format(byte, '08b') for byte in ec_odd_codewords)
+        
+        half_length = len(final_binary_data) // 2
+        first_half = final_binary_data[:half_length]
+        second_half = final_binary_data[half_length:]
+
+        first_half_chunks = [first_half[i:i+8] for i in range(0, len(first_half), 8)]
+        second_half_chunks = [second_half[i:i+8] for i in range(0, len(second_half), 8)]
+
+        intersected = ""
+        for bin1, bin2 in zip(first_half_chunks, second_half_chunks):
+            intersected += bin1 + bin2
+
+        for bin1, bin2 in zip(ec_even_binary.split(), ec_odd_binary.split()):
+            intersected += bin1 + bin2
+        final_binary_data = intersected + "0000000"
+
+    if version != 3 or ec_num == "L" or ec_num == "M":
+        final_binary_data += ''.join(format(byte, '08b') for byte in ec_codewords) + "0000000"
 
     mat = fill_qr_matrix(mat, size, final_binary_data)
 
