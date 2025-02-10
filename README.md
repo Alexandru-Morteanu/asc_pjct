@@ -9,8 +9,11 @@ Acest proiect este un generator și scanner de coduri QR facut cu scop academic.
 - Interfață simplă și intuitivă
 
 ## Constrangeri
-- Generarea si scanarea merge pana la verisunea 3/4 pentru ca nu am gasit un tabel corect pentru Byte padding si trebuia sa le reglezi manual valorile
-- Totodata alignment patternu' este pus static la positia (size - 9, size - 9) pentru versiuni >=2 deci de la versiune 7 nu mai merge si ar trebui sa iei valori din tabel
+- Generarea si scanarea merge pana la verisunea [1, 2, 3, 4-Low, 5-Low] am luat in considerarea ca error corection bitii se genereaza prin separarea pe indexi la data biti doar pentru versiunea 3 pentru quartile si high
+
+  <img width="183" alt="Screenshot 2025-02-10 at 16 28 27" src="https://github.com/user-attachments/assets/9209f2e6-a614-4cc7-8d9c-b40a281b8ddd" />
+
+- Totodata alignment patternu' este pus static la pozitia (size - 9, size - 9) pentru versiuni >=2 deci de la versiune 7 nu mai merge si ar trebui sa iei valori din tabel
 - Marimea pentru Numeric - 10 biti AlphaNumeric - 9 biti Byte - 8 biti este statica deci de la versiunea >=9 nu va mai merge
 - Nu am luat in considerare tipul kanji
 
@@ -234,11 +237,11 @@ Pentru a rula acest proiect, este necesar să aveți instalat:
    ```
 8. Si asta e data encodata pe 19 bytes (totalul de 26 pentru versiunea 1 )
    ```sh
-   01000001000101001000011001010110110001101100011011110
-   01011000010000001110111011011110111001001101100011001
-   0000100001001000000011000100110010001100110000
+   01000000010101001000011001010110110001101100011011110000111
+   01100000100011110110000010001111011000001000111101100000100
+   0111101100000100011110110000010001
    
-   41 14 86 56 C6 C6 F2 C2 07 76 F7 26 C6 42 12 03 13 23 30
+   40 54 86 56 C6 C6 F0 EC 11 EC 11 EC 11 EC 11 EC 11 EC 11
    ```
 9. Deci au ramas 7 bytes alocat pentru error corection bits
    ```sh
@@ -253,12 +256,12 @@ Pentru a rula acest proiect, este necesar să aveți instalat:
     <img width="295" alt="Screenshot 2025-02-09 at 00 10 02" src="https://github.com/user-attachments/assets/3af5d8e5-7406-45fb-8486-ca65f5abbda4" />
 
    ```sh
-   01000001000101001000011001010110110001101100011011110
-   01011000010000001110111011011110111001001101100011001
-   00001000010010000000110001001100100011001100001000010
-   1101010010101111000000111000010100011011011001001
+   01000000010101001000011001010110110001101100011011110000111
+   01100000100011110110000010001111011000001000111101100000100
+   01111011000001000111101100000100011010110101111010100101100
+   0111101100001011001001101011110
    
-   41 14 86 56 C6 C6 F2 C2 07 76 F7 26 C6 42 12 03 13 23 30 85 A9 5E 07 0A 36 C9
+   40 54 86 56 C6 C6 F0 EC 11 EC 11 EC 11 EC 11 EC 11 EC 11 AD 7A 96 3D 85 93 5E
    ```
 11. Hai sa-i punem pe QR code, pentru asta avem codul
    ```sh
@@ -428,9 +431,28 @@ Pentru a rula acest proiect, este necesar să aveți instalat:
     <img width="297" alt="Screenshot 2025-02-09 at 00 18 01" src="https://github.com/user-attachments/assets/8179b974-e48f-43db-97d1-25c7488d31e6" />
 
 ## Cum functioneaza Scanarea
+   Hai sa il scanam acum
+   
 1. Prima oara trebuie sa calculam hamming distance ul intre bitii de format din QR code si toti bitii de format din lookup table apoi selectam bitii de format cu cea mai mica hamming distance
-2. Iar acum avem masca, deci putem sa o aplicam peste QR code
-3. Si acum incercam sa scapam de errori prin reedsolomon library, 
+   
+   <img width="445" alt="Screenshot 2025-02-10 at 16 32 19" src="https://github.com/user-attachments/assets/627c721b-0286-4c76-b584-10b313f72a99" />
+
+3. Iar acum avem masca, deci putem sa o aplicam peste QR code
+
+   <img width="295" alt="Screenshot 2025-02-09 at 00 10 02" src="https://github.com/user-attachments/assets/3af5d8e5-7406-45fb-8486-ca65f5abbda4" />
+   
+5. Si acum incercam sa scapam de errori prin reedsolomon library, luand in considerare pentru version 3 pe high si quartile ca se face split pe indexi la data biti
+   ```sh
+   01000000010101001000011001010110110001101100011011110000111
+   01100000100011110110000010001111011000001000111101100000100
+   0111101100000100011110110000010001
+   
+   40 54 86 56 C6 C6 F0 EC 11 EC 11 EC 11 EC 11 EC 11 EC 11
+   ```
+6. Procesam bitii: 4 biti de format cu [8, 9, 10] biti numarul de caractere si restul este efectiv mesajul
+   ```sh
+   Hello
+   ```
 
 
 ## Contribuții
