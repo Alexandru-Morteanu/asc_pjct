@@ -49,7 +49,8 @@ Pentru a rula acest proiect, este necesar să aveți instalat:
    ```sh
    python scan.py
    ```
-2. Scanati QR codul
+2. Selectati poza cu QR code
+3. Cititi mesajul in consola
 
 ## Cum functioneaza Generarea
 1. Prima oara aflam pe ce versiune incape acel input in functie de format si calitate
