@@ -3,3 +3,4 @@ matplotlib
 reedsolo
 pillow
 opencv-python
+easygui
